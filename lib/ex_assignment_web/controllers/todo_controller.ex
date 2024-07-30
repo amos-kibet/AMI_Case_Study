@@ -60,10 +60,11 @@ defmodule ExAssignmentWeb.TodoController do
   end
 
   def delete(conn, %{"id" => id}) do
-    todo = Todos.get_todo!(id)
+    todo_id = String.to_integer(id)
+
+    todo = Todos.get_todo!(todo_id)
     {:ok, _todo} = Todos.delete_todo(todo)
 
-    todo_id = String.to_integer(id)
     :ok = Cache.invalidate(todo_id)
 
     conn
@@ -72,9 +73,9 @@ defmodule ExAssignmentWeb.TodoController do
   end
 
   def check(conn, %{"id" => id}) do
-    :ok = Todos.check(id)
-
     todo_id = String.to_integer(id)
+    :ok = Todos.check(todo_id)
+
     :ok = Cache.invalidate(todo_id)
 
     conn
