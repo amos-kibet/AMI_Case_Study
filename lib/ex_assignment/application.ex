@@ -7,24 +7,29 @@ defmodule ExAssignment.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      # Start the Telemetry supervisor
-      ExAssignmentWeb.Telemetry,
-      # Start the Ecto repository
-      ExAssignment.Repo,
-      # Start the PubSub system
-      {Phoenix.PubSub, name: ExAssignment.PubSub},
-      # Start the Endpoint (http/https)
-      ExAssignmentWeb.Endpoint
-      # Start a worker by calling: ExAssignment.Worker.start_link(arg)
-      # {ExAssignment.Worker, arg}
-    ]
+    children =
+      [
+        # Start the Telemetry supervisor
+        ExAssignmentWeb.Telemetry,
+        # Start the Ecto repository
+        ExAssignment.Repo,
+        # Start the PubSub system
+        {Phoenix.PubSub, name: ExAssignment.PubSub},
+        # Start the Endpoint (http/https)
+        ExAssignmentWeb.Endpoint
+        # Start a worker by calling: ExAssignment.Worker.start_link(arg)
+        # {ExAssignment.Worker, arg}
+      ] ++ more_children()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ExAssignment.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  defp more_children(env \\ Application.get_env(:ex_assignment, :env))
+  defp more_children(:test), do: []
+  defp more_children(_env), do: [ExAssignment.Cache]
 
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
