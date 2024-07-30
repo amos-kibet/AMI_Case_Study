@@ -6,7 +6,11 @@ defmodule ExAssignment.Todos do
   import Ecto.Query, warn: false
   alias ExAssignment.Repo
 
+  alias ExAssignment.Utils
+  alias ExAssignment.Cache
   alias ExAssignment.Todos.Todo
+
+  @ttl_in_seconds 3_600
 
   @doc """
   Returns the list of todos, optionally filtered by the given type.
@@ -44,12 +48,73 @@ defmodule ExAssignment.Todos do
 
   ASSIGNMENT: ...
   """
-  def get_recommended() do
-    list_todos(:open)
-    |> case do
-      [] -> nil
-      todos -> Enum.take_random(todos, 1) |> List.first()
+
+  def get_recommended(opts \\ [ttl: Utils.get_time_in_unix(@ttl_in_seconds)]) do
+    todo = get_recommended_todo()
+
+    maybe_set_cache_and_return_todo(todo, opts)
+  end
+
+  defp get_recommended_todo do
+    case Cache.get() do
+      %{todo: todo} ->
+        todo
+
+      _no_cache ->
+        create_recommendation()
     end
+  end
+
+  defp maybe_set_cache_and_return_todo(todo, ttl: ttl) do
+    cache = Cache.get()
+
+    cond do
+      Map.has_key?(cache, :todo) && cache.todo.id == todo.id ->
+        todo
+
+      true ->
+        Cache.set(%{todo: todo}, ttl)
+        todo
+    end
+  end
+
+  defp create_recommendation do
+    todos = get_todos()
+
+    # Calculate the total weight of the todos
+    # by summing up the inverse of each todo's priority.
+    total_weight =
+      Enum.reduce(todos, 0, fn {_id, priority}, acc ->
+        acc + 1 / priority
+      end)
+
+    # Create a new list of weighted todos by dividing
+    # each todo's priority by the total weight.
+    weighted_todos =
+      Enum.map(todos, fn {id, priority} ->
+        {id, 1 / priority / total_weight}
+      end)
+
+    random_value = :rand.uniform()
+
+    # Iterate over the weighted todos and accumulate
+    # the weights until the accumulated weight exceeds the random value,
+    # then return the id of the selected todo
+    recommendation_id =
+      Enum.reduce_while(weighted_todos, 0, fn {id, weight}, acc ->
+        if acc + weight >= random_value do
+          {:halt, id}
+        else
+          {:cont, acc + weight}
+        end
+      end)
+
+    Repo.get(Todo, recommendation_id)
+  end
+
+  defp get_todos do
+    query = from(t in Todo, where: not t.done, select: {t.id, t.priority})
+    Repo.all(query)
   end
 
   @doc """
