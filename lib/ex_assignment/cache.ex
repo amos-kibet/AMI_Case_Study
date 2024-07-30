@@ -15,6 +15,7 @@ defmodule ExAssignment.Cache do
     do: GenServer.cast(@server_name, {:set, cache, ttl})
 
   def invalidate(cache_key), do: GenServer.cast(@server_name, {:invalidate, cache_key})
+  def invalidate, do: GenServer.cast(@server_name, :invalidate)
 
   def start_link(_opts) do
     case GenServer.start_link(__MODULE__, %{}, name: @server_name) do
@@ -60,4 +61,6 @@ defmodule ExAssignment.Cache do
 
     {:noreply, maybe_updated_state}
   end
+
+  def handle_cast(:invalidate, _state), do: {:noreply, %{}}
 end

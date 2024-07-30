@@ -50,21 +50,21 @@ defmodule ExAssignment.TodosTest do
         Enum.count(Enum.filter(1..10, fn _count -> Todos.get_recommended() == todo_1 end))
 
       # Invalidate the cache to be able to get another recommendation
-      Cache.invalidate(todo_1.id)
+      Cache.invalidate()
 
       assert recommendation_count > 7
 
       recommendation_count =
         Enum.count(Enum.filter(1..10, fn _count -> Todos.get_recommended() == todo_2 end))
 
-      Cache.invalidate(todo_2.id)
+      Cache.invalidate()
 
       refute recommendation_count > 3
 
       recommendation_count =
         Enum.count(Enum.filter(1..10, fn _count -> Todos.get_recommended() == todo_3 end))
 
-      Cache.invalidate(todo_3.id)
+      Cache.invalidate()
 
       refute recommendation_count > 2
     end
