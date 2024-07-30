@@ -35,7 +35,7 @@ defmodule ExAssignment.Cache do
     if ttl >= current_time do
       {:reply, state, state}
     else
-      {:reply, %{}, state}
+      {:reply, %{}, %{}}
     end
   end
 
@@ -51,7 +51,7 @@ defmodule ExAssignment.Cache do
   def handle_cast({:invalidate, cache_key}, state) do
     maybe_updated_state =
       cond do
-        Map.has_key?(state, :todo) && state.todo.id == cache_key ->
+        state[:todo] && state.todo.id == cache_key ->
           %{}
 
         true ->

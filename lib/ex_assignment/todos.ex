@@ -69,7 +69,7 @@ defmodule ExAssignment.Todos do
     cache = Cache.get()
 
     cond do
-      Map.has_key?(cache, :todo) && cache.todo.id == todo.id ->
+      cache[:todo] && cache.todo.id == todo.id ->
         todo
 
       true ->
