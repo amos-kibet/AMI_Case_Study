@@ -1,6 +1,7 @@
 defmodule ExAssignmentWeb.TodoController do
   use ExAssignmentWeb, :controller
 
+  alias ExAssignment.Cache
   alias ExAssignment.Todos
   alias ExAssignment.Todos.Todo
 
@@ -62,6 +63,9 @@ defmodule ExAssignmentWeb.TodoController do
     todo = Todos.get_todo!(id)
     {:ok, _todo} = Todos.delete_todo(todo)
 
+    todo_id = String.to_integer(id)
+    :ok = Cache.invalidate(todo_id)
+
     conn
     |> put_flash(:info, "Todo deleted successfully.")
     |> redirect(to: ~p"/todos")
@@ -69,6 +73,9 @@ defmodule ExAssignmentWeb.TodoController do
 
   def check(conn, %{"id" => id}) do
     :ok = Todos.check(id)
+
+    todo_id = String.to_integer(id)
+    :ok = Cache.invalidate(todo_id)
 
     conn
     |> redirect(to: ~p"/todos")
